@@ -82,7 +82,10 @@ size=1024m -n size=64k ${name}1",
         group   => 'root',
         mode    => '0660',
         require => Mount[$osd_data],
-        before  => Service["ceph-osd.${osd_id}"];
+        before  => [
+          Service["ceph-osd.${osd_id}"],
+          Exec["ceph-osd-mkfs-${osd_id}"]
+        ]
       }
 
       mount { $osd_data:
