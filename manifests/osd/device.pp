@@ -17,8 +17,9 @@
 #
 
 define ceph::osd::device (
-	$osd_journal_type	= 'filesystem',
-	$osd_journal_size 	= 1
+  $osd_journal_type  = 'filesystem',
+  $osd_journal_size  = 2,
+  $autogenerate      = false,
 ) {
 
   include ceph::osd
@@ -26,6 +27,21 @@ define ceph::osd::device (
   include ceph::params
 
   $devname = regsubst($name, '.*/', '')
+
+  ##
+  # if $autogenerate enabled, the disk device will be loop devices which
+  # has different naming convension for parttion devices.
+  # e.g device name of partition 1 on /dev/sda is /dev/sda1, but
+  #     device name of partition 1 on /dev/loop0 is /dev/loop0p1,
+  # Below patch is to add prefix "p" to get correct partition name
+  ##
+  if $autogenerate {
+    $part_name_prefix = "${devname}p"
+    $part_prefix      = "${name}p"
+  } else {
+    $part_name_prefix = $devname
+    $part_prefix      = $name
+  }
 
   exec { "mktable_gpt_${devname}":
     command => "parted -a optimal --script ${name} mktable gpt",
@@ -46,15 +62,15 @@ define ceph::osd::device (
     }
     exec { "mkfs_${devname}":
     	command => "mkfs.xfs -f -d agcount=${::processorcount} -l \
-size=1024m -n size=64k ${name}2",
-    	unless  => "xfs_admin -l ${name}2",
+size=1024m -n size=64k ${part_prefix}2",
+      unless  => "xfs_admin -l ${part_prefix}2",
     	require => [Package['xfsprogs'], Exec["mkpart_${devname}"]],
     }
-    
-    $blkid_uuid_fact = "blkid_uuid_${devname}2"
-    $osd_id_fact = "ceph_osd_id_${devname}2"
-    $osd_data_device_name = "${name}2"
-    $osd_journal_device_name = "${name}1"
+
+    $blkid_uuid_fact         = "blkid_uuid_${part_name_prefix}2"
+    $osd_id_fact             = "ceph_osd_id_${part_name_prefix}2"
+    $osd_data_device_name    = "${part_prefix}2"
+    $osd_journal_device_name = "${part_prefix}1"
   } elsif $osd_journal_type == 'filesystem' {
 
     exec { "mkpart_${devname}":
@@ -65,17 +81,17 @@ size=1024m -n size=64k ${name}2",
 
     exec { "mkfs_${devname}":
       command => "mkfs.xfs -f -d agcount=${::processorcount} -l \
-size=1024m -n size=64k ${name}1",
-      unless  => "xfs_admin -l ${name}1",
+size=1024m -n size=64k ${part_prefix}1",
+      unless  => "xfs_admin -l ${part_prefix}1",
       require => [Package['xfsprogs'], Exec["mkpart_${devname}"]],
     }
 
-    $blkid_uuid_fact = "blkid_uuid_${devname}1"
-    $osd_id_fact = "ceph_osd_id_${devname}1"
-    $osd_data_device_name = "${name}1"
+    $blkid_uuid_fact      = "blkid_uuid_${part_name_prefix}1"
+    $osd_id_fact          = "ceph_osd_id_${part_name_prefix}1"
+    $osd_data_device_name = "${part_prefix}1"
   }
   notify { "BLKID FACT ${osd_data_device_name}: ${blkid_uuid_fact}": }
-  $blkid = inline_template('<%= scope.lookupvar(blkid_uuid_fact) or "undefined" %>')
+  $blkid = inline_template('<%= scope.lookupvar(@blkid_uuid_fact) or "undefined" %>')
   notify { "BLKID ${devname}: ${blkid}": }
 
   if $blkid != 'undefined'  and defined( Ceph::Key['admin'] ){
@@ -86,17 +102,17 @@ size=1024m -n size=64k ${name}1",
     }
 
     notify { "OSD ID FACT ${devname}: ${osd_id_fact}": }
-    $osd_id = inline_template('<%= scope.lookupvar(osd_id_fact) or "undefined" %>')
+    $osd_id = inline_template('<%= scope.lookupvar(@osd_id_fact) or "undefined" %>')
     notify { "OSD ID ${devname}: ${osd_id}":}
 
     if $osd_id != 'undefined' {
 
       ceph::conf::osd { $osd_id:
-        device       => $osd_data_device_name,
-	journal_type	=> $osd_journal_type,
-	journal_device	=> $osd_journal_device_name,
-        cluster_addr => $::ceph::osd::cluster_address,
-        public_addr  => $::ceph::osd::public_address,
+        device         => $osd_data_device_name,
+        journal_type   => $osd_journal_type,
+        journal_device => $osd_journal_device_name,
+        cluster_addr   => $::ceph::osd::cluster_address,
+        public_addr    => $::ceph::osd::public_address,
       }
 
       $osd_data = regsubst($::ceph::conf::osd_data, '\$id', $osd_id)
@@ -157,11 +173,10 @@ ceph auth add osd.${osd_id} osd 'allow *' mon 'allow rwx' \
         start     => "service ceph start osd.${osd_id}",
         stop      => "service ceph stop osd.${osd_id}",
         status    => "service ceph status osd.${osd_id}",
+        require   => Exec["ceph-osd-register-${osd_id}"],
         subscribe => Concat['/etc/ceph/ceph.conf'],
       }
 
     }
-
   }
-
 }
