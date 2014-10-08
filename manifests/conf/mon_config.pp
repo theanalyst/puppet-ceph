@@ -1,7 +1,7 @@
 # Define a mon
 #
 define ceph::conf::mon_config (
-  $mon_addr,
+  $mon_addr = $name,
   $mon_port = 6789,
 ) {
 
