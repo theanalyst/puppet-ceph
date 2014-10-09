@@ -23,7 +23,7 @@ define ceph::auth (
                 --add-key \
                   $(ceph --name mon. --keyring /tmp/.exec_add_ceph_auth_admin_${client}.tmp \
                   auth get-or-create-key client.${client}  $cap ) && rm -f /tmp/.exec_add_ceph_auth_admin_${client}.tmp ",
-    unless  => "ceph -n client.$client --keyring $keyring osd stat",
+    unless  => "ceph -n client.$client --keyring $keyring_path osd stat",
     require => File["$keyring_path"],
   }
 
