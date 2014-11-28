@@ -32,12 +32,14 @@ class ceph::radosgw::apache (
   $radosgw_key_file       = undef,
   $radosgw_ca_file        = undef,
   $docroot                = '/var/www',
+  $priority               = 25,
 ) {
 
   include ceph::radosgw::params
   include ::apache
   include ::apache::mod::fastcgi
   include ::apache::mod::rewrite
+  include ::apache::mod::headers
 
 
   Package['radosgw'] -> Package[$::ceph::radosgw::params::http_service]
@@ -64,11 +66,33 @@ class ceph::radosgw::apache (
     fastcgi_socket        => $fastcgi_ext_socket,
     fastcgi_dir           => $docroot,
     allow_encoded_slashes => 'on',
+    priority              => $priority,
     rewrites              =>  [{
                                 rewrite_rule => ['^/(.*) /s3gw.fcgi?%{QUERY_STRING} [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]']
                               }],
     require               => [Package['radosgw'],
                               File[$fastcgi_ext_script]],
+  }
+
+  ##
+  # A workaround to avoid swift client errors becuase of content-type missing
+  # while downloading the object.
+  # NOTE: this is just a workaround and should be removed once the issue fixed
+  # on radosgw code (I hope this is fixed in Giant, otherwise Ill file a bug)
+  ##
+
+  ##
+  # Apache module dont have conditional contentype injecting configuration code,
+  # so just adding it here. Just copying small chunk of code from Apache module
+  # and customizing here (and template too).
+  ##
+
+  concat::fragment { 'radosgw-header_workaround':
+    target  => "${priority}-radosgw.conf",
+    order   => 230,
+    content => '  <If "-z resp(\'CONTENT-TYPE\')">
+    Header set Content-Type "application/octet-stream"
+ </If>'
   }
 
   if $listen_ssl {

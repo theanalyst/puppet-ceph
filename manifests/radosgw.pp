@@ -108,7 +108,8 @@ class ceph::radosgw (
   ##
 
   file {"/var/lib/ceph/radosgw/${radosgw_id}":
-    ensure => 'directory',
+    ensure  => 'directory',
+    require => Package['radosgw'],
   }
 
   service { 'radosgw':
