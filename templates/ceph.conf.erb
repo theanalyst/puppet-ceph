@@ -36,10 +36,13 @@
 <% if @pool_default_crush_rule -%>
   osd pool default crush rule = <%= @pool_default_crush_rule %>
 <% end -%>
-
-mon osd min down reporters = 22
-
+<% if @num_osds_per_node  -%>
+  mon osd min down reporters = <%= @num_osds_per_node %>
+<% end -%>
   fsid = <%= @fsid %>
+<% if @mon_timecheck_interval -%>
+  mon timecheck interval = <%= @mon_timecheck_interval %>
+<% end -%>
 
 [mon]
 <% if @mon_init_members -%>
