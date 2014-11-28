@@ -66,7 +66,10 @@ class ceph::radosgw::apache (
     fastcgi_socket        => $fastcgi_ext_socket,
     fastcgi_dir           => $docroot,
     allow_encoded_slashes => 'on',
-    priority              => $priority,
+    custom_fragment       => '
+  <If "-z resp(\'CONTENT-TYPE\')">
+    Header set Content-Type "application/octet-stream"
+  </If>', 
     rewrites              =>  [{
                                 rewrite_rule => ['^/(.*) /s3gw.fcgi?%{QUERY_STRING} [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]']
                               }],
@@ -86,14 +89,6 @@ class ceph::radosgw::apache (
   # so just adding it here. Just copying small chunk of code from Apache module
   # and customizing here (and template too).
   ##
-
-  concat::fragment { 'radosgw-header_workaround':
-    target  => "${priority}-radosgw.conf",
-    order   => 230,
-    content => '  <If "-z resp(\'CONTENT-TYPE\')">
-    Header set Content-Type "application/octet-stream"
- </If>'
-  }
 
   if $listen_ssl {
     include apache::mod::ssl
