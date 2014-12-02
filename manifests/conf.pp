@@ -40,8 +40,9 @@ class ceph::conf (
   $mon_init_members        = undef,
   $osd_data                = '/var/lib/ceph/osd/ceph-$id',
   $osd_journal             = undef,
-  $osd_journal_type	   = 'filesystem',
-  $mds_data                = '/var/lib/ceph/mds/ceph-$id'
+  $osd_journal_type	       = 'filesystem',
+  $mds_data                = '/var/lib/ceph/mds/ceph-$id',
+  $mon_timecheck_interval  = undef,
 ) {
 
   include 'ceph::package'
