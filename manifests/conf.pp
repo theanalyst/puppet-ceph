@@ -45,7 +45,7 @@ class ceph::conf (
 ) {
 
   include 'ceph::package'
- 
+
   if $osd_journal {
     $osd_journal_real = $osd_journal
   } else {
@@ -58,8 +58,6 @@ class ceph::conf (
     mode    => '0664',
     require => Package['ceph'],
   }
-
-  Concat::Fragment <<| target == '/etc/ceph/ceph.conf' |>>
 
   concat::fragment { 'ceph.conf':
     target  => '/etc/ceph/ceph.conf',
