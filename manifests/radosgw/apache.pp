@@ -4,21 +4,25 @@
 #
 # === Parameters
 #
-#  [*bind_address*]
+# [*bind_address*]
 #    (optional) Bind address in Apache for Radosgw. (Defaults to '0.0.0.0')
 #
-#  [*listen_ssl*]
+# [*listen_ssl*]
 #    (optional) Enable SSL support in Apache. (Defaults to false)
 #
-#  [*radosgw_cert*]
+# [*radosgw_cert*]
 #    (required with listen_ssl) Certificate to use for SSL support.
 #
-#  [*radosgw_key*]
+# [*radosgw_key*]
 #    (required with listen_ssl) Private key to use for SSL support.
 #
-#  [*radosgw_ca*]
+# [*radosgw_ca*]
 #    (required with listen_ssl) CA certificate to use for SSL support.
 #
+# [*headers*]
+#   Array of heders to be added to the vhost.
+#
+
 class ceph::radosgw::apache (
   $bind_address           = '0.0.0.0',
   $serveradmin_email      = 'root@localhost',
@@ -33,6 +37,7 @@ class ceph::radosgw::apache (
   $radosgw_ca_file        = undef,
   $docroot                = '/var/www',
   $priority               = 25,
+  $headers                = undef,
 ) {
 
   include ceph::radosgw::params
@@ -66,6 +71,7 @@ class ceph::radosgw::apache (
     fastcgi_socket        => $fastcgi_ext_socket,
     fastcgi_dir           => $docroot,
     allow_encoded_slashes => 'on',
+    headers              => $headers,
     custom_fragment       => '
   <If "-z resp(\'CONTENT-TYPE\')">
     Header set Content-Type "application/octet-stream"
