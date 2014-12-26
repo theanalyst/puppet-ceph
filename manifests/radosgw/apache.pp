@@ -59,30 +59,6 @@ class ceph::radosgw::apache (
     notify  => Service['httpd'],
   }
 
-  apache::vhost { 'radosgw':
-    servername            => $server_name,
-    serveradmin           => $serveradmin_email,
-    docroot               => $docroot,
-    port                  => $listen_port_http,
-    ssl                   => false,
-    error_log_file        => 'radosgw_error.log',
-    access_log_file       => 'radosgw.log',
-    fastcgi_server        => $fastcgi_ext_script,
-    fastcgi_socket        => $fastcgi_ext_socket,
-    fastcgi_dir           => $docroot,
-    allow_encoded_slashes => 'on',
-    headers              => $headers,
-    custom_fragment       => '
-  <If "-z resp(\'CONTENT-TYPE\')">
-    Header set Content-Type "application/octet-stream"
-  </If>', 
-    rewrites              =>  [{
-                                rewrite_rule => ['^/(.*) /s3gw.fcgi?%{QUERY_STRING} [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]']
-                              }],
-    require               => [Package['radosgw'],
-                              File[$fastcgi_ext_script]],
-  }
-
   ##
   # A workaround to avoid swift client errors becuase of content-type missing
   # while downloading the object.
@@ -95,6 +71,30 @@ class ceph::radosgw::apache (
   # so just adding it here. Just copying small chunk of code from Apache module
   # and customizing here (and template too).
   ##
+
+  apache::vhost { 'radosgw':
+    servername            => $server_name,
+    serveradmin           => $serveradmin_email,
+    docroot               => $docroot,
+    port                  => $listen_port_http,
+    ssl                   => $listen_ssl,
+    error_log_file        => 'radosgw_error.log',
+    access_log_file       => 'radosgw.log',
+    fastcgi_server        => $fastcgi_ext_script,
+    fastcgi_socket        => $fastcgi_ext_socket,
+    fastcgi_dir           => $docroot,
+    allow_encoded_slashes => 'on',
+    headers              => $headers,
+    custom_fragment       => '
+  <If "-z resp(\'CONTENT-TYPE\')">
+    Header set Content-Type "application/octet-stream"
+  </If>',
+    rewrites              =>  [{
+                                rewrite_rule => ['^/(.*) /s3gw.fcgi?%{QUERY_STRING} [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]']
+                              }],
+    require               => [Package['radosgw'],
+                              File[$fastcgi_ext_script]],
+  }
 
   if $listen_ssl {
     include apache::mod::ssl
