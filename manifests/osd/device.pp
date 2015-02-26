@@ -60,11 +60,17 @@ define ceph::osd::device (
     	unless  => "parted ${name} print | egrep '^ 2.*ceph$'",
     	require => [Package['parted'], Exec["mktable_gpt_${devname}"], Exec["mkpart_journal_${devname}"]]
     }
+
+    exec { "partprobe_${devname}":
+      command => "partprobe ${name}",
+      unless  => "test -b ${part_prefix}2",
+      require => [Exec["mkpart_journal_${devname}"],Exec["mkpart_${devname}"]],
+    }
     exec { "mkfs_${devname}":
     	command => "mkfs.xfs -f -d agcount=${::processorcount} -l \
 size=1024m -n size=64k ${part_prefix}2",
       unless  => "xfs_admin -l ${part_prefix}2",
-    	require => [Package['xfsprogs'], Exec["mkpart_${devname}"]],
+      require => [Package['xfsprogs'], Exec["partprobe_${devname}"]],
     }
 
     $blkid_uuid_fact         = "blkid_uuid_${part_name_prefix}2"
@@ -79,11 +85,17 @@ size=1024m -n size=64k ${part_prefix}2",
     	require => [Package['parted'], Exec["mktable_gpt_${devname}"]]
     }
 
+    exec { "partprobe_${devname}":
+      command => "partprobe ${name}",
+      unless  => "test -b ${part_prefix}1",
+      require => Exec["mkpart_${devname}"]
+    }
+
     exec { "mkfs_${devname}":
       command => "mkfs.xfs -f -d agcount=${::processorcount} -l \
 size=1024m -n size=64k ${part_prefix}1",
       unless  => "xfs_admin -l ${part_prefix}1",
-      require => [Package['xfsprogs'], Exec["mkpart_${devname}"]],
+      require => [Package['xfsprogs'], Exec["partprobe_${devname}"]],
     }
 
     $blkid_uuid_fact      = "blkid_uuid_${part_name_prefix}1"
