@@ -167,7 +167,7 @@ size=1024m -n size=64k ${part_prefix}1",
         unless  => "ceph auth list | egrep '^osd.${osd_id}$'",
         require => [
           Mount[$osd_data],
-          Concat['/etc/ceph/ceph.conf'],
+          Ceph::Conf::Mon_config<||>
           ],
       }
 
@@ -179,6 +179,12 @@ ceph auth add osd.${osd_id} osd 'allow *' mon 'allow rwx' \
         require => Exec["ceph-osd-mkfs-${osd_id}"],
       }
 
+      ##
+      # Only osd related config changes should cause ceph osds to be restarted
+      ##
+      Ceph_config<|tag == 'osd_config'|> ~> Service["ceph-osd.${osd_id}"]
+      Ceph_config<|tag == "osd_config_${osd_id}"|> ~> Service["ceph-osd.${osd_id}"]
+
       service { "ceph-osd.${osd_id}":
         ensure    => running,
         provider  => $::ceph::params::service_provider,
@@ -186,7 +192,6 @@ ceph auth add osd.${osd_id} osd 'allow *' mon 'allow rwx' \
         stop      => "service ceph stop osd.${osd_id}",
         status    => "service ceph status osd.${osd_id}",
         require   => Exec["ceph-osd-register-${osd_id}"],
-        subscribe => Concat['/etc/ceph/ceph.conf'],
       }
 
     }

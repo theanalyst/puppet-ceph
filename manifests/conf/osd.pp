@@ -8,12 +8,30 @@ define ceph::conf::osd (
   $public_addr  = undef,
 ) {
 
-  file {"/tmp/ceph_osd${name}": content => "$device,$journal_device,$journal_type\n"}
+  ceph_config {
+    "osd.${name}/host":      value => $::hostname, tag => "osd_config_${name}";
+    "osd.${name}/devs":      value => $device, tag => "osd_config_${name}";
+  }
 
-  concat::fragment { "ceph-osd-${name}.conf":
-    target  => '/etc/ceph/ceph.conf',
-    order   => '80',
-    content => template('ceph/ceph.conf-osd.erb'),
+  if $osd_journal_type == 'first_partition' {
+    if ! $journal_device {
+      fail("journal_device is required when osd_journal_type is first_partition")
+    }
+    ceph_config {
+      "osd.${name}/osd journal":    value => $journal_device, tag => "osd_config_${name}"
+    }
+  }
+
+  if $cluster_addr {
+    ceph_config {
+      "osd.${name}/cluster addr": value => $cluster_addr, tag => "osd_config_${name}"
+    }
+  }
+
+  if $public_addr {
+    ceph_config {
+      "osd.${name}/public addr": value => $public_addr, tag => "osd_config_${name}";
+    }
   }
 
 }

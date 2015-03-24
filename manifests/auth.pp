@@ -8,6 +8,7 @@ define ceph::auth (
   $file_owner   = 'root',
   $keyring_path = '/etc/ceph/keyring',
   $cap          = undef,
+  $ceph_connect_timeout = 5,
 ) {
 
   file { $keyring_path:
@@ -19,10 +20,10 @@ define ceph::auth (
   exec { "exec_add_ceph_auth_${client}":
     command =>  "ceph-authtool ${keyring_path} \
                   --name=client.${client} --add-key \
-                  $(ceph --name mon. --key '${mon_key}' \
+                  $(ceph --connect-timeout $ceph_connect_timeout --name mon. --key '${mon_key}' \
                   auth get-or-create-key client.${client}  ${cap})
                 ",
-    unless  => "ceph -n client.${client} --keyring ${keyring_path} osd stat",
+    unless  => "ceph --connect-timeout $ceph_connect_timeout -n client.${client} --keyring ${keyring_path} osd stat",
     require => File[$keyring_path],
   }
 
