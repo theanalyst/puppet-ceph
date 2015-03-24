@@ -156,6 +156,8 @@ size=1024m -n size=64k ${part_prefix}1",
         ],
       }
 
+      Ceph::Conf::Mon_config<||> -> Exec["ceph-osd-mkfs-${osd_id}"]
+
       exec { "ceph-osd-mkfs-${osd_id}":
         command => "ceph-osd -c /etc/ceph/ceph.conf \
 -i ${osd_id} \
@@ -167,7 +169,6 @@ size=1024m -n size=64k ${part_prefix}1",
         unless  => "ceph auth list | egrep '^osd.${osd_id}$'",
         require => [
           Mount[$osd_data],
-          Ceph::Conf::Mon_config<||>
           ],
       }
 

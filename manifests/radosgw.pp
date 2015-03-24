@@ -60,7 +60,7 @@ class ceph::radosgw (
   ##
 
   Ceph::Auth[$radosgw_id] ~> Service['radosgw']
-  Concat['/etc/ceph/ceph.conf'] ~> Service['radosgw']
+  Ceph_config<||> ~> Service['radosgw']
 
   ceph::conf::radosgw { $name:
     keyring                      => $radosgw_keyring_orig,
