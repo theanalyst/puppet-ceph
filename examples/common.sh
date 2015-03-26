@@ -46,7 +46,6 @@ EOT
     # Autosign certificates from our test setup
     echo "*.test" > /etc/puppet/autosign.conf
 
-    test -f /etc/puppet/modules/concat || puppet module install ripienaar/concat
     test -f /etc/puppet/modules/apt || puppet module install puppetlabs/apt
     test -f /etc/puppet/modules/ceph || ln -s /vagrant /etc/puppet/modules/ceph
 

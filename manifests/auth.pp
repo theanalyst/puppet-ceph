@@ -21,8 +21,7 @@ define ceph::auth (
     command =>  "ceph-authtool ${keyring_path} \
                   --name=client.${client} --add-key \
                   $(ceph --connect-timeout $ceph_connect_timeout --name mon. --key '${mon_key}' \
-                  auth get-or-create-key client.${client}  ${cap})
-                ",
+                  auth get-or-create-key client.${client} ${cap})",
     unless  => "ceph --connect-timeout $ceph_connect_timeout -n client.${client} --keyring ${keyring_path} osd stat",
     require => File[$keyring_path],
   }

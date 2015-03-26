@@ -10,6 +10,7 @@ define ceph::conf::radosgw (
   $keyring = '/etc/ceph/keyring',
   $socket = '/var/run/ceph/radosgw.sock',
   $logfile = '/var/log/ceph/radosgw.log',
+  $ceph_radosgw_listen_ssl = false,
 ) {
 
   ceph_config {

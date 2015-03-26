@@ -3,9 +3,9 @@
 define ceph::conf::osd (
   $device,
   $journal_device = undef,
-  $journal_type = 'filesystem',
-  $cluster_addr = undef,
-  $public_addr  = undef,
+  $journal_type   = 'filesystem',
+  $cluster_addr   = undef,
+  $public_addr    = undef,
 ) {
 
   ceph_config {
@@ -13,7 +13,7 @@ define ceph::conf::osd (
     "osd.${name}/devs":      value => $device, tag => "osd_config_${name}";
   }
 
-  if $osd_journal_type == 'first_partition' {
+  if $journal_type == 'first_partition' {
     if ! $journal_device {
       fail("journal_device is required when osd_journal_type is first_partition")
     }

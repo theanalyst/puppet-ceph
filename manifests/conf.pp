@@ -136,12 +136,6 @@ class ceph::conf (
     }
   }
 
-  if $pool_default_size {
-    ceph_config {
-      'global/osd pool default size': value => $pool_default_size
-    }
-  }
-
   if $pool_default_crush_rule {
     ceph_config {
       'global/osd pool default crush rule': value => $pool_default_crush_rule

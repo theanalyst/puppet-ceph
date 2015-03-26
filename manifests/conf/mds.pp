@@ -1,8 +1,6 @@
 # Define a mds
 #
-define ceph::conf::mds (
-  $mds_data
-) {
+define ceph::conf::mds {
 
   ceph_config {
       "mds.${name}/host":      value => $::hostname
