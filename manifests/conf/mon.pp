@@ -5,10 +5,8 @@ define ceph::conf::mon (
   $mon_port,
 ) {
 
-  concat::fragment { "ceph-mon-${name}.conf":
-    target  => '/etc/ceph/ceph.conf',
-    order   => '50',
-    content => template('ceph/ceph.conf-mon.erb'),
+  ceph_config {
+    "mon.${name}/host":      value => $::hostname;
+    "mon.${name}/mon addr":  value => "${mon_addr}:${mon_port}";
   }
-
 }

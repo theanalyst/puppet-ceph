@@ -17,7 +17,6 @@ class { 'ceph::osd':
 
   let :facts do
     {
-      :concat_basedir => '/var/lib/puppet/lib/concat',
       :processorcount => 8,
       :hostname       => 'dummy-host'
     }
@@ -25,8 +24,8 @@ class { 'ceph::osd':
 
   describe 'when the device is empty' do
 
-    it { should include_class('ceph::osd') }
-    it { should include_class('ceph::conf') }
+    it { should contain_class('ceph::osd') }
+    it { should contain_class('ceph::conf') }
 
     it { should contain_exec('mktable_gpt_device').with(
       'command' => 'parted -a optimal --script /dev/device mktable gpt',
@@ -43,7 +42,7 @@ class { 'ceph::osd':
     it { should contain_exec('mkfs_device').with(
       'command' => 'mkfs.xfs -f -d agcount=8 -l size=1024m -n size=64k /dev/device1',
       'unless'  => 'xfs_admin -l /dev/device1',
-      'require' => ['Package[xfsprogs]', 'Exec[mkpart_device]']
+      'require' => ['Package[xfsprogs]', 'Exec[partprobe_device]']
     ) }
 
   end
@@ -62,7 +61,6 @@ ceph::key { 'admin':
     end
     let :facts do
       {
-        :concat_basedir     => '/var/lib/puppet/lib/concat',
         :blkid_uuid_device1 => 'dummy-uuid-1234',
         :hostname           => 'dummy-host'
       }
@@ -77,7 +75,6 @@ ceph::key { 'admin':
     describe 'when the osd is created' do
       let :facts do
         {
-          :concat_basedir      => '/var/lib/puppet/lib/concat',
           :blkid_uuid_device1  => 'dummy-uuid-1234',
           :ceph_osd_id_device1 => '56',
           :hostname            => 'dummy-host'
@@ -85,7 +82,7 @@ ceph::key { 'admin':
       end
 
       it { should contain_ceph__conf__osd('56').with(
-        'device'       => '/dev/device',
+        'device'       => '/dev/device1',
         'public_addr'  => '10.1.0.156',
         'cluster_addr' => '10.0.0.56'
       ) }
@@ -108,7 +105,6 @@ ceph::key { 'admin':
         'command' => 'ceph-osd -c /etc/ceph/ceph.conf -i 56 --mkfs --mkkey --osd-uuid dummy-uuid-1234
 ',
         'creates' => '/var/lib/ceph/osd/ceph-56/keyring',
-        'require' => ['Mount[/var/lib/ceph/osd/ceph-56]', 'Concat[/etc/ceph/ceph.conf]']
       ) }
 
       it { should contain_exec('ceph-osd-register-56').with(
@@ -121,7 +117,6 @@ ceph::key { 'admin':
         'start'     => 'service ceph start osd.56',
         'stop'      => 'service ceph stop osd.56',
         'status'    => 'service ceph status osd.56',
-        'subscribe' => 'Concat[/etc/ceph/ceph.conf]'
       ) }
     end
 
