@@ -66,7 +66,7 @@ class ceph::conf (
   ceph_config {
     'global/keyring':                  value => '/etc/ceph/keyring';
     'global/fsid':                     value => $fsid;
-    'global/pool_default_size':        value => $pool_default_size;
+    'global/osd pool default size':    value => $pool_default_size;
     'global/osd pool default pg num':  value => $pool_default_pg_num;
     'global/osd pool default pgp num': value => $pool_default_pgp_num;
     'mon/mon data':                    value => $mon_data;

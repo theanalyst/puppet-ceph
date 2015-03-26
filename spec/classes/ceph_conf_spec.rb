@@ -13,7 +13,7 @@ describe 'ceph::conf' do
     it 'should create ceph config' do
       should contain_ceph_config('global/keyring').with_value('/etc/ceph/keyring')
       should contain_ceph_config('global/fsid').with_value('qwertyuiop')
-      should contain_ceph_config('global/pool_default_size').with_value(3)
+      should contain_ceph_config('global/osd pool default size').with_value(3)
       should contain_ceph_config('global/osd pool default pg num').with_value(1024)
       should contain_ceph_config('global/osd pool default pgp num').with_value(1024)
       should contain_ceph_config('global/auth cluster required').with_value('cephx')
