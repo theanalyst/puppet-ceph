@@ -7,6 +7,8 @@ define ceph::osd::disk_setup (
   $autogenerate      = false,
 ) {
 
+  include ceph::osd
+
   $devname = regsubst($name, '.*/', '')
 
   ##
@@ -47,6 +49,8 @@ define ceph::osd::disk_setup (
       unless  => "test -b ${part_prefix}2",
       require => [Exec["mkpart_journal_${devname}"],Exec["mkpart_${devname}"]],
     }
+
+    exec { "mkfs_${devname}":
     	command => "mkfs.xfs -f -d agcount=${::processorcount} -l \
 size=1024m -n size=64k ${part_prefix}2",
       unless  => "xfs_admin -l ${part_prefix}2",
@@ -60,7 +64,7 @@ size=1024m -n size=64k ${part_prefix}2",
   } elsif $osd_journal_type == 'filesystem' {
 
     exec { "mkpart_${devname}":
-    	command => "parted -a --script optimal -s ${name} mkpart ceph 0% 100%",
+      command => "parted --script -a optimal -s ${name} mkpart ceph 0% 100%",
     	unless  => "parted --script ${name} print | egrep '^ 1.*ceph$'",
     	require => [Package['parted'], Exec["mktable_gpt_${devname}"]]
     }

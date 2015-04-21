@@ -91,10 +91,7 @@ define ceph::osd::device (
         fstype  => 'xfs',
         options => 'rw,noatime,inode64',
         pass    => 2,
-        require => [
-          Exec["mkfs_${devname}"],
-          File[$osd_data]
-        ],
+        require => File[$osd_data],
       }
 
       Ceph::Conf::Mon_config<||> -> Exec["ceph-osd-mkfs-${osd_id}"]
