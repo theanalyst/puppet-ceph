@@ -39,7 +39,7 @@ class ceph::radosgw (
   $radosgw_cert_file            = undef,
   $radosgw_key_file             = undef,
   $radosgw_ca_file              = undef,
-  $logfile                      = '/var/log/ceph/radosgw',
+  $logfile                      = '/var/log/ceph/radosgw.log',
   $keyring                      = '/etc/ceph/keyring',
   $radosgw_keyring              = undef,
   $region                       = 'RegionOne',
