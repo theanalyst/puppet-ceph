@@ -43,6 +43,7 @@ class ceph::conf (
   $osd_journal_type	       = 'filesystem',
   $mds_data                = '/var/lib/ceph/mds/ceph-$id',
   $mon_timecheck_interval  = undef,
+  $mon_pg_warn_max_object_skew = undef,
 ) {
 
   include 'ceph::package'
@@ -154,5 +155,10 @@ class ceph::conf (
     }
   }
 
+  if $mon_pg_warn_max_object_skew {
+    ceph_config {
+      'mon/mon pg warn max object skew': value => $mon_pg_warn_max_object_skew
+    }
+  }
 
 }
